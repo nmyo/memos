@@ -5,7 +5,9 @@ import { ExternalLinkIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Link } from "react-router-dom";
+import { identityProviderServiceClient } from "@/grpcweb";
 import { workspaceSettingNamePrefix, useWorkspaceSettingStore } from "@/store/v1";
+import { IdentityProvider } from "@/types/proto/api/v1/idp_service";
 import { WorkspaceGeneralSetting } from "@/types/proto/api/v1/workspace_setting_service";
 import { WorkspaceSettingKey } from "@/types/proto/store/workspace_setting";
 import { useTranslate } from "@/utils/i18n";
@@ -18,6 +20,7 @@ const WorkspaceSection = () => {
     workspaceSettingStore.getWorkspaceSettingByKey(WorkspaceSettingKey.GENERAL)?.generalSetting || {},
   );
   const [workspaceGeneralSetting, setWorkspaceGeneralSetting] = useState<WorkspaceGeneralSetting>(originalSetting);
+  const [identityProviderList, setIdentityProviderList] = useState<IdentityProvider[]>([]);
 
   useEffect(() => {
     setWorkspaceGeneralSetting(originalSetting);
@@ -48,6 +51,15 @@ const WorkspaceSection = () => {
       return;
     }
     toast.success(t("message.update-succeed"));
+  };
+
+  useEffect(() => {
+    fetchIdentityProviderList();
+  }, []);
+
+  const fetchIdentityProviderList = async () => {
+    const { identityProviders } = await identityProviderServiceClient.listIdentityProviders({});
+    setIdentityProviderList(identityProviders);
   };
 
   return (
@@ -106,35 +118,36 @@ const WorkspaceSection = () => {
         </Link>
       </div>
       <div className="w-full flex flex-row justify-between items-center">
-        <span>Disallow user registration</span>
+        <span>{t("setting.workspace-section.disallow-user-registration")}</span>
         <Switch
           checked={workspaceGeneralSetting.disallowUserRegistration}
           onChange={(event) => updatePartialSetting({ disallowUserRegistration: event.target.checked })}
         />
       </div>
       <div className="w-full flex flex-row justify-between items-center">
-        <span>Disallow password auth</span>
+        <span>{t("setting.workspace-section.disallow-password-auth")}</span>
         <Switch
+          disabled={identityProviderList.length === 0 ? true : false}
           checked={workspaceGeneralSetting.disallowPasswordAuth}
           onChange={(event) => updatePartialSetting({ disallowPasswordAuth: event.target.checked })}
         />
       </div>
       <div className="w-full flex flex-row justify-between items-center">
-        <span>Disallow Change Username</span>
+        <span>{t("setting.workspace-section.disallow-change-username")}</span>
         <Switch
           checked={workspaceGeneralSetting.disallowChangeUsername}
           onChange={(event) => updatePartialSetting({ disallowChangeUsername: event.target.checked })}
         />
       </div>
       <div className="w-full flex flex-row justify-between items-center">
-        <span>Disallow Change Nickname</span>
+        <span>{t("setting.workspace-section.disallow-change-nickname")}</span>
         <Switch
           checked={workspaceGeneralSetting.disallowChangeNickname}
           onChange={(event) => updatePartialSetting({ disallowChangeNickname: event.target.checked })}
         />
       </div>
       <div className="w-full flex flex-row justify-between items-center">
-        <span className="truncate">Week start day</span>
+        <span className="truncate">{t("setting.workspace-section.week-start-day")}</span>
         <Select
           className="!min-w-fit"
           value={workspaceGeneralSetting.weekStartDayOffset}
@@ -142,9 +155,9 @@ const WorkspaceSection = () => {
             updatePartialSetting({ weekStartDayOffset: weekStartDayOffset || 0 });
           }}
         >
-          <Option value={-1}>Saturday</Option>
-          <Option value={0}>Sunday</Option>
-          <Option value={1}>Monday</Option>
+          <Option value={-1}>{t("setting.workspace-section.saturday")}</Option>
+          <Option value={0}>{t("setting.workspace-section.sunday")}</Option>
+          <Option value={1}>{t("setting.workspace-section.monday")}</Option>
         </Select>
       </div>
       <div className="mt-2 w-full flex justify-end">
